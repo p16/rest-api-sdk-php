@@ -23,21 +23,12 @@ use PayPal\Transport\PPRestCall;
  */
 class Payment extends PPModel implements IResource
 {
-    /**
-     * @var
-     */
-    private static $credential;
+    protected static $callStatic;
 
-    /**
-     * Set Credential
-     *
-     * @param $credential
-     *
-     * @deprecated Pass ApiContext to create/get methods instead
-     */
-    public static function setCredential($credential)
+    public function __construct(PPRestCall $call)
     {
-        self::$credential = $credential;
+        $this->call = $call;
+        self::$callStatic = $call;
     }
 
     /**
@@ -370,16 +361,11 @@ class Payment extends PPModel implements IResource
      *
      * @return $this
      */
-    public function create($apiContext = null)
+    public function create()
     {
         $payLoad = $this->toJSON();
 
-        if ($apiContext == null) {
-            $apiContext = new ApiContext(self::$credential);
-        }
-
-        $call = new PPRestCall($apiContext);
-        $json = $call->execute(array('PayPal\Rest\RestHandler'), "/v1/payments/payment", "POST", $payLoad);
+        $json = $this->call->execute(array('PayPal\Rest\RestHandler'), "/v1/payments/payment", "POST", $payLoad);
         $this->fromJson($json);
 
         return $this;

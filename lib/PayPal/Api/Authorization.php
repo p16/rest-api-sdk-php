@@ -22,21 +22,19 @@ use PayPal\Transport\PPRestCall;
  */
 class Authorization extends PPModel implements IResource
 {
-    /**
-     * @var
-     */
-    private static $credential;
-
-    /**
-     * Set Credential
-     *
-     * @param $credential
-     *
-     * @deprecated Pass ApiContext to create/get methods instead
-     */
-    public static function setCredential($credential)
+    public function __construct(PPRestCall $call = null)
     {
-        self::$credential = $credential;
+        $this->call = $call;
+    }
+
+    protected function getCall()
+    {
+        if ($this->call == null)
+        {
+            $this->call = new PPRestCall(new ApiContext(null));
+        }
+
+        return $this->call;
     }
 
     /**
@@ -372,7 +370,7 @@ class Authorization extends PPModel implements IResource
      * @return Authorization
      * @throws \InvalidArgumentException
      */
-    public static function get($authorizationId, $apiContext = null)
+    public static function get($authorizationId, PPRestCall $call)
     {
         if (($authorizationId == null) || (strlen($authorizationId) <= 0)) {
             throw new \InvalidArgumentException("authorizationId cannot be null or empty");
@@ -380,14 +378,9 @@ class Authorization extends PPModel implements IResource
 
         $payLoad = "";
 
-        if ($apiContext == null) {
-            $apiContext = new ApiContext(self::$credential);
-        }
-
-        $call = new PPRestCall($apiContext);
         $json = $call->execute(array('PayPal\Rest\RestHandler'), "/v1/payments/authorization/$authorizationId", "GET", $payLoad);
 
-        $ret = new Authorization();
+        $ret = new Authorization($call);
         $ret->fromJson($json);
 
         return $ret;
@@ -402,7 +395,7 @@ class Authorization extends PPModel implements IResource
      * @return Capture
      * @throws \InvalidArgumentException
      */
-    public function capture($capture, $apiContext = null)
+    public function capture($capture)
     {
         if ($this->getId() == null) {
             throw new \InvalidArgumentException("Id cannot be null");
@@ -414,12 +407,7 @@ class Authorization extends PPModel implements IResource
 
         $payLoad = $capture->toJSON();
 
-        if ($apiContext == null) {
-            $apiContext = new ApiContext(self::$credential);
-        }
-
-        $call = new PPRestCall($apiContext);
-        $json = $call->execute(array('PayPal\Rest\RestHandler'), "/v1/payments/authorization/{$this->getId()}/capture", "POST", $payLoad);
+        $json = $this->getCall()->execute(array('PayPal\Rest\RestHandler'), "/v1/payments/authorization/{$this->getId()}/capture", "POST", $payLoad);
 
         $ret = new Capture();
         $ret->fromJson($json);
@@ -435,7 +423,7 @@ class Authorization extends PPModel implements IResource
      * @return Authorization
      * @throws \InvalidArgumentException
      */
-    public function void($apiContext = null)
+    public function void()
     {
         if ($this->getId() == null) {
             throw new \InvalidArgumentException("Id cannot be null");
@@ -443,12 +431,7 @@ class Authorization extends PPModel implements IResource
 
         $payLoad = "";
 
-        if ($apiContext == null) {
-            $apiContext = new ApiContext(self::$credential);
-        }
-
-        $call = new PPRestCall($apiContext);
-        $json = $call->execute(array('PayPal\Rest\RestHandler'), "/v1/payments/authorization/{$this->getId()}/void", "POST", $payLoad);
+        $json = $this->getCall()->execute(array('PayPal\Rest\RestHandler'), "/v1/payments/authorization/{$this->getId()}/void", "POST", $payLoad);
 
         $ret = new Authorization();
         $ret->fromJson($json);
@@ -464,7 +447,7 @@ class Authorization extends PPModel implements IResource
      * @return $this
      * @throws \InvalidArgumentException
      */
-    public function reauthorize($apiContext = null)
+    public function reauthorize()
     {
         if ($this->getId() == null) {
             throw new \InvalidArgumentException("Id cannot be null");
@@ -472,14 +455,41 @@ class Authorization extends PPModel implements IResource
 
         $payLoad = $this->toJSON();
 
-        if ($apiContext == null) {
-            $apiContext = new ApiContext(self::$credential);
-        }
-
-        $call = new PPRestCall($apiContext);
-        $json = $call->execute(array('PayPal\Rest\RestHandler'), "/v1/payments/authorization/{$this->getId()}/reauthorize", "POST", $payLoad);
+        $json = $this->getCall()->execute(array('PayPal\Rest\RestHandler'), "/v1/payments/authorization/{$this->getId()}/reauthorize", "POST", $payLoad);
         $this->fromJson($json);
 
         return $this;
     }
+
+    public function fromArray($arr) {
+        
+        unset($arr['call']);
+
+        foreach($arr as $k => $v) {
+            if(is_array($v)) {
+                $clazz = \PayPal\Common\PPReflectionUtil::getPropertyClass(get_class($this), $k);
+                
+                if(\PayPal\Common\PPArrayUtil::isAssocArray($v)) {
+                    $o = new $clazz();
+                    $o->fromArray($v);
+                    $this->__set($k, $o);
+                } else {
+                    $arr =  array();        
+                    foreach($v as $nk => $nv) {
+                        if(is_array($nv)) {
+                            $o = new $clazz();
+                            $o->fromArray($nv);
+                            $arr[$nk] = $o;
+                        } else {
+                            $arr[$nk] = $nv;
+                        }
+                    }
+                    $this->__set($k, $arr);
+                } 
+            }else {
+                $this->$k = $v;
+            }
+        }
+    }
+
 }
