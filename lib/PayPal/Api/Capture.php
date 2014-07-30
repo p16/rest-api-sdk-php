@@ -22,6 +22,21 @@ use PayPal\Transport\PPRestCall;
  */
 class Capture extends PPModel implements IResource
 {
+    public function __construct(PPRestCall $call = null)
+    {
+        $this->call = $call;
+    }
+
+    protected function getCall()
+    {
+        if ($this->call == null)
+        {
+            $this->call = new PPRestCall(new ApiContext(null));
+        }
+
+        return $this->call;
+    }
+
     /**
      * @var
      */
@@ -382,7 +397,7 @@ class Capture extends PPModel implements IResource
      * @return Capture
      * @throws \InvalidArgumentException
      */
-    public static function get($captureId, $apiContext = null)
+    public static function get($captureId, PPRestCall $call)
     {
         if (($captureId == null) || (strlen($captureId) <= 0)) {
             throw new \InvalidArgumentException("captureId cannot be null or empty");
@@ -390,14 +405,9 @@ class Capture extends PPModel implements IResource
 
         $payLoad = "";
 
-        if ($apiContext == null) {
-            $apiContext = new ApiContext(self::$credential);
-        }
-
-        $call = new PPRestCall($apiContext);
         $json = $call->execute(array('PayPal\Rest\RestHandler'), "/v1/payments/capture/$captureId", "GET", $payLoad);
 
-        $ret = new Capture();
+        $ret = new Capture($call);
         $ret->fromJson($json);
 
         return $ret;
@@ -412,7 +422,7 @@ class Capture extends PPModel implements IResource
      * @return Refund
      * @throws \InvalidArgumentException
      */
-    public function refund($refund, $apiContext = null)
+    public function refund($refund)
     {
         if ($this->getId() == null) {
             throw new \InvalidArgumentException("Id cannot be null");
@@ -424,12 +434,7 @@ class Capture extends PPModel implements IResource
 
         $payLoad = $refund->toJSON();
 
-        if ($apiContext == null) {
-            $apiContext = new ApiContext(self::$credential);
-        }
-
-        $call = new PPRestCall($apiContext);
-        $json = $call->execute(array('PayPal\Rest\RestHandler'), "/v1/payments/capture/{$this->getId()}/refund", "POST", $payLoad);
+        $json = $this->getCall()->execute(array('PayPal\Rest\RestHandler'), "/v1/payments/capture/{$this->getId()}/refund", "POST", $payLoad);
 
         $ret = new Refund();
         $ret->fromJson($json);

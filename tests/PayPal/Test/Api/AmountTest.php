@@ -5,36 +5,30 @@ namespace PayPal\Test\Api;
 use PayPal\Api\Amount;
 use PayPal\Test\Constants;
 
-class AmountTest extends \PHPUnit_Framework_TestCase {
+use PayPal\Test\PayPalTestCase;
 
+class AmountTest extends PayPalTestCase
+{
 	private $amounts;
 
-	public static $currency = "USD";
-	public static $total = "1.12";	
-
-	public static function createAmount() {
-		$amount = new Amount();
-		$amount->setCurrency(self::$currency);
-		$amount->setTotal(self::$total);
+	public function setup()
+	{
+		$this->amounts['partial'] = $this->createAmount();
 		
-		return $amount;
-	}
-	
-	public function setup() {
-		$this->amounts['partial'] = self::createAmount();
-		
-		$amount = self::createAmount();
-		$amount->setDetails(DetailsTest::createAmountDetails());
+		$amount = $this->createAmount();
+		$amount->setDetails($this->createAmountDetails());
 		$this->amounts['full'] = $amount;
 	}
 
-	public function testGetterSetter() {
-		$this->assertEquals(self::$currency, $this->amounts['partial']->getCurrency());
-		$this->assertEquals(self::$total, $this->amounts['partial']->getTotal());
-		$this->assertEquals(DetailsTest::$fee, $this->amounts['full']->getDetails()->getFee());
+	public function testGetterSetter()
+	{
+		$this->assertEquals($this->currency, $this->amounts['partial']->getCurrency());
+		$this->assertEquals($this->total, $this->amounts['partial']->getTotal());
+		$this->assertEquals($this->fee, $this->amounts['full']->getDetails()->getFee());
 	}
 	
-	public function testSerializeDeserialize() {
+	public function testSerializeDeserialize()
+	{
 		$a1 = $this->amounts['partial'];
 		
 		$a2 = new Amount();

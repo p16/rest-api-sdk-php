@@ -27,23 +27,19 @@ use PayPal\Transport\PPRestCall;
  */
 class CreditCard extends PPModel implements IResource
 {
-    /**
-     * Private Variable
-     *
-     * @var $credential
-     */
-    private static $credential;
-
-    /**
-     * Set Credential
-     *
-     * @param $credential
-     *
-     * @deprecated Pass ApiContext to create/get methods instead
-     */
-    public static function setCredential($credential)
+    public function __construct(PPRestCall $call = null)
     {
-        self::$credential = $credential;
+        $this->call = $call;
+    }
+
+    protected function getCall()
+    {
+        if ($this->call == null)
+        {
+            $this->call = new PPRestCall(new ApiContext(null));
+        }
+
+        return $this->call;
     }
 
     /**
@@ -601,16 +597,12 @@ class CreditCard extends PPModel implements IResource
      *
      * @return $this
      */
-    public function create($apiContext = null)
+    public function create()
     {
         $payLoad = $this->toJSON();
 
-        if ($apiContext == null) {
-            $apiContext = new ApiContext(self::$credential);
-        }
+        $json = $this->getCall()->execute(array('PayPal\Rest\RestHandler'), "/v1/vault/credit-card", "POST", $payLoad);
 
-        $call = new PPRestCall($apiContext);
-        $json = $call->execute(array('PayPal\Rest\RestHandler'), "/v1/vault/credit-card", "POST", $payLoad);
         $this->fromJson($json);
 
         return $this;
@@ -625,7 +617,7 @@ class CreditCard extends PPModel implements IResource
      * @return CreditCard
      * @throws \InvalidArgumentException
      */
-    public static function get($creditCardId, $apiContext = null)
+    public static function get($creditCardId, PPRestCall $call)
     {
         if (($creditCardId == null) || (strlen($creditCardId) <= 0)) {
             throw new \InvalidArgumentException("creditCardId cannot be null or empty");
@@ -633,14 +625,9 @@ class CreditCard extends PPModel implements IResource
 
         $payLoad = "";
 
-        if ($apiContext == null) {
-            $apiContext = new ApiContext(self::$credential);
-        }
-
-        $call = new PPRestCall($apiContext);
         $json = $call->execute(array('PayPal\Rest\RestHandler'), "/v1/vault/credit-card/$creditCardId", "GET", $payLoad);
 
-        $ret = new CreditCard();
+        $ret = new CreditCard($call);
         $ret->fromJson($json);
 
         return $ret;
@@ -662,12 +649,7 @@ class CreditCard extends PPModel implements IResource
 
         $payLoad = "";
 
-        if ($apiContext == null) {
-            $apiContext = new ApiContext(self::$credential);
-        }
-
-        $call = new PPRestCall($apiContext);
-        $call->execute(array('PayPal\Rest\RestHandler'), "/v1/vault/credit-card/{$this->getId()}", "DELETE", $payLoad);
+        $this->getCall()->execute(array('PayPal\Rest\RestHandler'), "/v1/vault/credit-card/{$this->getId()}", "DELETE", $payLoad);
 
         return true;
     }

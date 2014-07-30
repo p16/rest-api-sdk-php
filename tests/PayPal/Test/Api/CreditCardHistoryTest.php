@@ -7,50 +7,54 @@ use PayPal\Api\Address;
 use PayPal\Api\CreditCard;
 use PayPal\Test\Constants;
 
-class CreditCardHistoryTest extends \PHPUnit_Framework_TestCase {
-	
+use PayPal\Test\PayPalTestCase;
+
+class CreditCardHistoryTest extends PayPalTestCase
+{
 	private $cards;
 	
-	public static $id = "id";
-	public static $validUntil = "2013-02-28T00:00:00Z";
-	public static $state = "created";
-	public static $payerId = "payer-id";
-	public static $cardType = "visa";
-	public static $cardNumber = "4417119669820331";
-	public static $expireMonth = 11;
-	public static $expireYear = "2019";
-	public static $cvv = "012";
-	public static $firstName = "V";
-	public static $lastName = "C";
+	public $id = "id";
+	public $validUntil = "2013-02-28T00:00:00Z";
+	public $state = "created";
+	public $payerId = "payer-id";
+	public $cardType = "visa";
+	public $cardNumber = "4417119669820331";
+	public $expireMonth = 11;
+	public $expireYear = "2019";
+	public $cvv = "012";
+	public $firstName = "V";
+	public $lastName = "C";
 	
-	public static function createCreditCard() {
+	public function createCreditCard()
+	{
 		$card = new CreditCard();
-		$card->setType(self::$cardType);
-		$card->setNumber(self::$cardNumber);
-		$card->setExpireMonth(self::$expireMonth);
-		$card->setExpireYear(self::$expireYear);
-		$card->setCvv2(self::$cvv);
-		$card->setFirstName(self::$firstName);
-		$card->setLastName(self::$lastName);
-		$card->setId(self::$id);
-		$card->setValidUntil(self::$validUntil);
-		$card->setState(self::$state);
-		$card->setPayerId(self::$payerId);
+		$card->setType($this->cardType);
+		$card->setNumber($this->cardNumber);
+		$card->setExpireMonth($this->expireMonth);
+		$card->setExpireYear($this->expireYear);
+		$card->setCvv2($this->cvv);
+		$card->setFirstName($this->firstName);
+		$card->setLastName($this->lastName);
+		$card->setId($this->id);
+		$card->setValidUntil($this->validUntil);
+		$card->setState($this->state);
+		$card->setPayerId($this->payerId);
 		return $card;
 	}
 	
-	public function setup() {
-		
-		$card = self::createCreditCard();
-		$card->setBillingAddress(AddressTest::createAddress());	
-		$card->setLinks(array(LinksTest::createLinks()));
+	public function setup()
+	{
+		$card = $this->createCreditCard();
+		$card->setBillingAddress($this->createAddress());	
+		$card->setLinks(array($this->createLinks()));
 		$this->cards['full'] = $card;
 		
-		$card = self::createCreditCard();	
+		$card = $this->createCreditCard();	
 		$this->cards['partial'] = $card;
 	}
 	
-	public function testGetterSetters() {
+	public function testGetterSetters()
+	{
 		$cardHistory = new CreditCardHistory();
 		$cardHistory->setCreditCards(array($this->cards['partial'], $this->cards['full']));
 		$cardHistory->setCount(2);
@@ -59,7 +63,8 @@ class CreditCardHistoryTest extends \PHPUnit_Framework_TestCase {
 	}
 
 	
-	public function testSerializationDeserialization() {
+	public function testSerializationDeserialization()
+	{
 		$cardHistory = new CreditCardHistory();
 		$cardHistory->setCreditCards(array($this->cards['partial'], $this->cards['full']));
 		$cardHistory->setCount(2);

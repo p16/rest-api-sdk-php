@@ -13,15 +13,6 @@ class LinksTest extends \PHPUnit_Framework_TestCase {
 	public static $rel = "1.12";
 	public static $method = "1.12";
 	
-	public static function createLinks() {
-		$links = new Links();
-		$links->setHref(self::$href);
-		$links->setRel(self::$rel);
-		$links->setMethod(self::$method);
-		
-		return $links;
-	}
-	
 	public function setup() {
 		$this->links = self::createLinks();
 	}
